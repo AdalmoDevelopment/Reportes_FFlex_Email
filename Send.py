@@ -25,7 +25,8 @@ db_connection = mysql.connector.connect(
 )
 cursor = db_connection.cursor(dictionary=True)
 
-cursor.execute("""
+# Consulta SQL corregida
+query = """
     SELECT r.*, u.email, u.intensivo
     FROM registros_new r 
     JOIN users u ON u.nombre = r.usuario 
@@ -34,13 +35,13 @@ cursor.execute("""
         OR 
         (u.intensivo = 'no' AND !(r.in_time != 0 AND r.out_time != 0 AND r.pause_time != 0 AND r.restart_time != 0))
     ) 
-    AND r.fecha = CURDATE()';
-""")
+    AND r.fecha = CURDATE()
+"""
 
+cursor.execute(query)
 fichajeserroneos = cursor.fetchall()
 
 for fichaje in fichajeserroneos:
-
     in_color = '#9299a6'
     pause_color = '#9299a6'
     restart_color = '#9299a6'
@@ -72,7 +73,7 @@ for fichaje in fichajeserroneos:
 
     # Crear tabla HTML con estilos en línea
     html = f"""
-     <html>
+    <html>
     <body>
         {warning_message}
         <p>Estimado {fichaje['usuario']},</p>
