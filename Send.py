@@ -5,19 +5,16 @@ import mysql.connector
 from datetime import datetime, timedelta
 from email.mime.image import MIMEImage
 import os.path
-from PIL import Image 
+from PIL import Image
 
 # Obtener la ruta del directorio actual
 current_directory = os.path.dirname(__file__)
-
-    # Concatenar la ruta del directorio actual con el nombre de la imagen
 image_path = os.path.join(current_directory, "image001.png")
-
 
 smtp_server = 'smtp.gmail.com'
 smtp_port = 587
-smtp_user = 'jthomas@adalmo.com'
-smtp_pass = 'delasmil2'
+smtp_user = 'rrhh@adalmo.com'
+smtp_pass = 'HR.1977!mc'
 
 # Configurar la conexión a la base de datos MySQL
 db_connection = mysql.connector.connect(
@@ -37,21 +34,20 @@ cursor.execute("""
         OR 
         (u.intensivo = 'no' AND !(r.in_time != 0 AND r.out_time != 0 AND r.pause_time != 0 AND r.restart_time != 0))
     ) 
-    AND r.fecha = CURDATE() 
-    AND r.usuario = 'JUAN IGNACIO THOMAS GARCIA';
+    AND r.fecha = CURDATE()';
 """)
 
 fichajeserroneos = cursor.fetchall()
 
 for fichaje in fichajeserroneos:
-    print(fichaje)  # Debug: Imprime los valores del fichaje para verificar
 
     in_color = '#9299a6'
     pause_color = '#9299a6'
     restart_color = '#9299a6'
     out_color = '#9299a6'
 
-    email_to = fichaje['email']
+    email_to = fichaje['email'] if fichaje['email'] else 'rrhh@adalmo.com'
+    
     if fichaje['in_time'] == timedelta(0):
         in_color = 'red'
         fichaje['in_time'] = 'No fichada'
@@ -66,16 +62,21 @@ for fichaje in fichajeserroneos:
         fichaje['out_time'] = 'No fichada'
 
     if fichaje['intensivo'] == 'si':
-            fichaje['pause_time'] = 'Intensivo'
-            fichaje['restart_time'] = 'Intensivo'
-            pause_color, restart_color = '#9299a6', '#9299a6'
+        fichaje['pause_time'] = 'Intensivo'
+        fichaje['restart_time'] = 'Intensivo'
+        pause_color, restart_color = '#9299a6', '#9299a6'
+
+    warning_message = ""
+    if not fichaje['email']:
+        warning_message = "<p style='color: red; font-weight:bold'>*No se ha podido enviar este aviso al usuario, comprobar en FichaFlex apartado usuarios si este tiene un Email correcto y existente.*</p>"
 
     # Crear tabla HTML con estilos en línea
     html = f"""
      <html>
     <body>
-        <p>Estimado {fichaje['usuario']}</p>
-        <p>Se han detectado uno o varios fichajes sin hacer ayer:</p>
+        {warning_message}
+        <p>Estimado {fichaje['usuario']},</p>
+        <p>Se detectaron uno o varios fichajes sin hacer ayer:</p>
         
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
@@ -83,14 +84,14 @@ for fichaje in fichajeserroneos:
                     <th style="padding: 8px; color: #9299a6; text-align: center;">Fecha</th>
                     <th style="padding: 8px; color: #9299a6; text-align: center;"> </th>
                     <th style="padding: 8px; color: #9299a6; text-align: center;">ENTRADA JORNADA</th>
-                    <th style="padding: 8px; color: #9299a6; text-align: center;">SALIDA JORNADA </th>
+                    <th style="padding: 8px; color: #9299a6; text-align: center;">SALIDA JORNADA</th>
                     <th style="padding: 8px; color: #9299a6; text-align: center;">INICIO DESCANSO</th>
                     <th style="padding: 8px; color: #9299a6; text-align: center;">SALIDA DESCANSO</th>
                 </tr>
             </thead>
             <tbody>
                 <tr style="background-color: #1f2937;">
-                    <td style="padding: 8px; color: #9299a6; background-color: #111827; text-align: center;">{fichaje['fecha']}</td>
+                    <td style="padding: 8px; color: #9299a6; background-color: #111827; text-align: center;">{datetime.strftime(fichaje['fecha'], '%d/%m/%Y')}</td>
                     <td style="padding: 8px; color: #9299a6; background-color: #1f2937; text-align: center; font-size:20px;">L</td>
                     <td style="padding: 8px; color: {in_color}; background-color: #111827; text-align: center;">{fichaje['in_time']}</td>
                     <td style="padding: 8px; color: {out_color}; background-color: #1f2937; text-align: center;">{fichaje['out_time']}</td>
@@ -103,7 +104,6 @@ for fichaje in fichajeserroneos:
         <p>Por favor, necesitamos llevar de forma meticulosa los registros de horas.</p>
         <p>Saludos.</p>
         <img src="cid:image1" alt="imagen" style="width: 100%; max-width: 600px; display: block; margin-left: auto; margin-right: auto;"/>
-
     </body>
     </html>
     """
@@ -115,30 +115,19 @@ for fichaje in fichajeserroneos:
     msg['Subject'] = 'Fichaje incorrecto detectado'
     msg.attach(MIMEText(html, 'html'))
 
-# Obtener la ruta del directorio actual
-    current_directory = os.path.dirname(__file__)
-
-    # Concatenar la ruta del directorio actual con el nombre de la imagen
-    image_path = os.path.join(current_directory, "image001.png")
-
     # Abrir la imagen
-        # Abrir la imagen
     with open(image_path, 'rb') as img_file:
         img_data = img_file.read()
 
     # Crear un objeto MIMEImage con los datos binarios de la imagen
     image_mime = MIMEImage(img_data, name=os.path.basename(image_path))
-
     image_mime.add_header('Content-ID', '<image1>')
-
-    # Adjuntar la imagen al mensaje
     msg.attach(image_mime)
 
-    
     # Envía el correo electrónico
     with smtplib.SMTP(smtp_server, smtp_port) as server:
         server.starttls()
         server.login(smtp_user, smtp_pass)
         server.sendmail(smtp_user, email_to, msg.as_string())
-                    
-    print(f"Email enviado a {email_to}")  
+
+    print(f"Email enviado a {email_to}")
