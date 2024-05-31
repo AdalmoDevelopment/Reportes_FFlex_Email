@@ -36,6 +36,7 @@ query = """
         (u.intensivo = 'no' AND !(r.in_time != 0 AND r.out_time != 0 AND r.pause_time != 0 AND r.restart_time != 0))
     ) 
     AND r.fecha = CURDATE()-1
+    AND u.status = 'On'
     AND r.tipo_fichaje = 'Laboral'
 """
 
