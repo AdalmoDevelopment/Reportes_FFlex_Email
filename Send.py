@@ -35,32 +35,41 @@ query = """
         OR 
         (u.intensivo = 'no' AND !(r.in_time != 0 AND r.out_time != 0 AND r.pause_time != 0 AND r.restart_time != 0))
     ) 
-    AND r.fecha = CURDATE()
+    AND r.fecha = CURDATE()-1
+    AND r.tipo_fichaje = 'Laboral'
 """
 
 cursor.execute(query)
 fichajeserroneos = cursor.fetchall()
 
 for fichaje in fichajeserroneos:
-    in_color = '#9299a6'
-    pause_color = '#9299a6'
-    restart_color = '#9299a6'
-    out_color = '#9299a6'
+    in_color = '#329450'
+    pause_color = '#329450'
+    restart_color = '#329450'
+    out_color = '#329450'
 
     email_to = fichaje['email'] if fichaje['email'] else 'rrhh@adalmo.com'
     
     if fichaje['in_time'] == timedelta(0):
         in_color = 'red'
-        fichaje['in_time'] = 'No fichada'
+        fichaje['in_time'] = 'No fichado'
+    else :
+        fichaje['in_time'] = 'Fichado'
     if fichaje['pause_time'] == timedelta(0):
         pause_color = 'red'
-        fichaje['pause_time'] = 'No fichada'
+        fichaje['pause_time'] = 'No fichado'
+    else :
+        fichaje['pause_time'] = 'Fichado'
     if fichaje['restart_time'] == timedelta(0):
         restart_color = 'red'
-        fichaje['restart_time'] = 'No fichada'
+        fichaje['restart_time'] = 'No fichado'
+    else :
+        fichaje['restart_time'] = 'Fichado'
     if fichaje['out_time'] == timedelta(0):
         out_color = 'red'
-        fichaje['out_time'] = 'No fichada'
+        fichaje['out_time'] = 'No fichado'
+    else :
+        fichaje['out_time'] = 'Fichado'
 
     if fichaje['intensivo'] == 'si':
         fichaje['pause_time'] = 'Intensivo'
@@ -76,8 +85,8 @@ for fichaje in fichajeserroneos:
     <html>
     <body>
         {warning_message}
-        <p>Estimado {fichaje['usuario']},</p>
-        <p>Se detectaron uno o varios fichajes sin hacer ayer:</p>
+        <p>Estimado/a {fichaje['usuario']},</p>
+        <p>Se detectaron uno o varios fichajes incidentados del día de ayer:</p>
         
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
@@ -102,7 +111,9 @@ for fichaje in fichajeserroneos:
             </tbody>
         </table>
         </div>
-        <p>Por favor, necesitamos llevar de forma meticulosa los registros de horas.</p>
+        <p>Os recordamos que desde mayo de 2019 por el Real Decreto-Ley 8/2019 los fichajes de jornada laboral son <b style="font-size:24px">OBLIGATORIOS</b></p>
+        <p>En caso de ser vacaciones, recuérdale a tu responsable que debe introducirlo en el sistema. En caso se ser otro tipo de ausencia justificada, debes revisarlo con RRHH.</p>
+        <p>Gracias,</p>
         <p>Saludos.</p>
         <img src="cid:image1" alt="imagen" style="width: 100%; max-width: 600px; display: block; margin-left: auto; margin-right: auto;"/>
     </body>
