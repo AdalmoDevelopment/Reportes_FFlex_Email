@@ -37,7 +37,9 @@ query = """
     ) 
     AND r.fecha = CURDATE()-1
     AND u.status = 'On'
+    AND u.envio_mail = 'On'
     AND r.tipo_fichaje = 'Laboral'
+    
 """
 
 cursor.execute(query)
